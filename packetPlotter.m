@@ -103,16 +103,11 @@ classdef packetPlotter
 %             disp(hopLine);
             
             trials = regexp(hopLine, '[0-9]*(?= ms)', 'match');
-%             disp(trials);
             trials_num = str2double(trials);
-%             disp(trials_num);
             avg = mean(trials_num);
             
-            %disp(avg);
             ips = regexp(hopLine, '(?:[0-9]{1,3}\.){3}[0-9]{1,3}', 'match');
             ip = char(ips(1));
-            %disp(ip);
-            %disp(length(ip));
             
             names = regexp(hopLine, '[a-zA-Z0-9\.-]*\.[a-z]{3}', 'match');
             names(length(names)+1) = {''};
@@ -121,95 +116,13 @@ classdef packetPlotter
             %disp(length(name));
             hopObj = packetPlotter.createHop(name, ip, avg);
         end
-        
-        % function [output] = trace_graph(trace_array)
-        %     % draws graph given trace data
-        %     % input: trace data as 1D array of hop classes
-        %     % output:   0 if worked
-        %     %           1 if not worked
-        %     worldmap world;
-        %     load coastlines;
-        %     [latcells, loncells] = polysplit(coastlat, coastlon);
-        %     numel(latcells);
-        %     plotm(coastlat, coastlon);
-            
-        %     % PRETTY? 1 = YES
-        %     %         0 = NO
-        %     pretty = 1;
-            
-        %     if pretty
-        %         counter = 1;
-            
-        %         for i = 1:length(trace_array)
-        %             if ~isempty(trace_array(i).location_ip)
-        %                 if counter>1
-        %                     t1 = strsplit(trace_array(i-1).location_ip, '.');
-        %                     t1 = t1(1);
-        %                     t1 = t1{1,:};
-        %                     t2 = strsplit(trace_array(i).location_ip, '.');
-        %                     t2 = t2(1);
-        %                     t2 = t2{1,:};
-        %                     %disp(t1);
-        %                     if ~strcmp(t1, t2)
-        %                         geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip);
-        %                         geo_time(counter) = trace_array(i).avg_latency;
-        %                         counter = counter + 1;
-        %                     end
-        %                 else
-        %                     geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip);
-        %                     geo_time(counter) = trace_array(i).avg_latency;
-        %                     counter = counter + 1;
-        %                 end
-        %             end
-        %         end
-
-        %         for i= 1:length(geo)-1
-        %             %Plot points and text
-        %             plotm(str2double(geo(i).lat), str2double(geo(i).long), 'go');
-        %             plotm(str2double(geo(i+1).lat), str2double(geo(i+1).long), 'go');
-        %             textm(str2double(geo(i).lat), str2double(geo(i).long), sprintf('%d', i));
-        %             textm(str2double(geo(i+1).lat), str2double(geo(i+1).long), sprintf('%d', i+1));
-
-        %             %Point line and text
-        %             plotm([str2double(geo(i).lat) str2double(geo(i+1).lat)], [str2double(geo(i).long), str2double(geo(i+1).long)], 'g-');
-        %             textm((str2double(geo(i).lat) + str2double(geo(i+1).lat))/2, (str2double(geo(i).long) + str2double(geo(i+1).long))/2, sprintf('%.2f', geo_time(i)));
-        %         end
-        %     else
-        %         counter = 1;
-            
-        %         for i = 1:length(trace_array)
-        %             if ~isempty(trace_array(i).location_ip) 
-        %                 geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip);
-        %                 geo_time(counter) = trace_array(i).avg_latency;
-        %                 counter = counter + 1;
-        %             end
-        %         end
-
-        %         for i= 1:length(geo)-1
-        %             %Plot points and text
-        %             plotm(str2double(geo(i).lat), str2double(geo(i).long), 'go');
-        %             plotm(str2double(geo(i+1).lat), str2double(geo(i+1).long), 'go');
-        %             textm(str2double(geo(i).lat), str2double(geo(i).long), sprintf('%d', i));
-        %             textm(str2double(geo(i+1).lat), str2double(geo(i+1).long), sprintf('%d', i+1));
-
-        %             %Point line and text
-        %             plotm([str2double(geo(i).lat) str2double(geo(i+1).lat)], [str2double(geo(i).long), str2double(geo(i+1).long)], 'g-');
-        %             textm((str2double(geo(i).lat) + str2double(geo(i+1).lat))/2, (str2double(geo(i).long) + str2double(geo(i+1).long))/2, sprintf('%.2f', geo_time(i)));
-        %         end
-        %     end
-            
-        %     output = 0;
-        %     disp('Done');
-        % end
 
         function [output] = trace_graph(trace_array)
             % draws graph given trace data
             % input: trace data as 1D array of hop classes
             % output:   0 if worked
             %           1 if not worked
-%             disp('got to trace_graph');
             webmap;
-%             disp('ran trace_graph');
             counter = 1;
             for i = 1:length(trace_array)
                 if ~isempty(trace_array(i).location_ip)
