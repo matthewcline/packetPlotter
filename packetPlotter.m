@@ -94,13 +94,11 @@ classdef packetPlotter
         end
         
         function hopObj = make_hop_pc(hopLine)
-%             disp(hopLine);
             if regexp(char(hopLine), '\*[ ]*\*[ ]*\*')
                 hopObj = packetPlotter.createHop('', '', 0);
                 return
             end
             hopLine = char(hopLine);
-%             disp(hopLine);
             
             trials = regexp(hopLine, '[0-9]*(?= ms)', 'match');
             trials_num = str2double(trials);
@@ -124,6 +122,7 @@ classdef packetPlotter
             %           1 if not worked
             webmap;
             counter = 1;
+            max_latency = 0;
             for i = 1:length(trace_array)
                 if ~isempty(trace_array(i).location_ip)
                     if counter>1
@@ -136,10 +135,14 @@ classdef packetPlotter
                         %disp(t1);
                         geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
                         geo_time(counter) = trace_array(i).avg_latency;
+                        if trace_array(i).avg_latency > max_latency:
+                            max_latency = trace_array(i).avg_latency;
                         counter = counter + 1;
                     else
                         geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
                         geo_time(counter) = trace_array(i).avg_latency;
+                        if trace_array(i).avg_latency > max_latency:
+                            max_latency = trace_array(i).avg_latency;
                         counter = counter + 1;
                     end
                 end
