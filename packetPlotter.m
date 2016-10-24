@@ -132,7 +132,7 @@ classdef packetPlotter
                         t2 = strsplit(trace_array(i).location_ip, '.');
                         t2 = t2(1);
                         t2 = t2{1,:};
-                        %disp(t1);
+                        
                         geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
                         geo_time(counter) = trace_array(i).avg_latency;
                         if trace_array(i).avg_latency > max_latency:
@@ -219,7 +219,6 @@ classdef packetPlotter
         
         function arrow(lats, lons)
             wmline(lats, lons);
-            % Wayne was here
         end
     end
 end  
