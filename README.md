@@ -2,5 +2,5 @@
 
 Maps the path of a packet across an IP network in real-time.
 
-![Alt text](Tanzania_map.png?raw=true "Optional Title")
+![Alt text](Tanzania_map.png?raw=true "Path of a packet from Berkeley, CA, USA to Tanzania http://www.zanvarsity.ac.tz/")
 
