@@ -3,30 +3,31 @@ classdef packetPlotter
         url
     end
     methods
-        function packetPlotterObj = packetPlotter(url)
-            packetPlotterObj.url = url;
-            getTraceRoute(packetPlotterObj);
+        function packet_plotter_obj = packetPlotter(url)
+            packet_plotter_obj.url = url;
+            get_trace_route(packet_plotter_obj);
         end
         
-        function [output, trace_array] = getTraceRoute(obj)
+        function [output, trace_array] = get_trace_route(obj)
             % plots packets
             % input: url as string
             % output:   0 if worked, pops up a graph
             %           1 if not
+
             disp('Getting hops...');
+
             if (ismac||isunix)
                 [output, trace_array] = nixpp(obj);
             elseif (ispc)
                 [output, trace_array]  = pcpp(obj);
             else
                 error('Unrecognized system OS');
-                output = 0;
+                output = 1;
             end
 
-            if output==1
+            if output == 1
                 error('Error: traceroute failed');
             else
-%                 disp('calling trace_graph');
                 packetPlotter.trace_graph(trace_array);
             end
         end
@@ -34,25 +35,31 @@ classdef packetPlotter
         function [output, trace_array] = nixpp(obj)
             % get trace data for mac/linux/all nix based systems
             % input: url as string
-            % output:   0 if worked, pops up a graph
+            % output:   0 if commanded executed successfully
             %           1 if not
             [status, cmdout] = unix(['traceroute ' obj.url]);
-            if status==1
+
+            % if unsucessful, return
+            if status == 1
                 output = 1;
                 return;
             end
+
+            % retrieve lines from traceroute command
             cmdout = strsplit(cmdout, '\n');
             cmdout(1)=[]; cmdout(length(cmdout))=[];
             for i = 1:length(cmdout)
                 trace_array(i) = packetPlotter.make_hop_nix(char(cmdout(i)));
             end
+            
+            % successful
             output = 0;
         end
 
         function [output, hops] = pcpp(obj)
             % get trace data for pc systems
             % input: url as string
-            % output:   0 if worked
+            % output:   0 if commanded executed successfully
             %           1 if not
             [status, cmdout] = dos(['tracert ' obj.url]);
             cmdout = strsplit(cmdout, ':\n');
@@ -74,17 +81,18 @@ classdef packetPlotter
     end
     methods (Static)
         function hop = make_hop_nix(charr)
-%             disp(charr)
             if regexp(charr, '* *')
                 hop = packetPlotter.createHop('', '', 0);
                 return
             end
+            disp(charr)
             names = regexp(charr, '[0-9a-z-\.]*\.([a-z]{3})', 'match');
             names(length(names)+1)={''};
             name = char(names(1));
             ips = regexp(charr, '(?:[0-9]{1,3}\.){3}[0-9]{1,3}', 'match');
             ip = ips(1);
             l_trials = regexp(charr, '[0-9.]*(?= ms)', 'match');
+            disp(l_trials)
             l_trials_num = zeros(1, length(l_trials));
             for i=1:length(l_trials)
                 l_trials_num(i)=str2num(char(l_trials(i)));
@@ -94,18 +102,25 @@ classdef packetPlotter
         end
         
         function hopObj = make_hop_pc(hopLine)
+%             disp(hopLine);
             if regexp(char(hopLine), '\*[ ]*\*[ ]*\*')
                 hopObj = packetPlotter.createHop('', '', 0);
                 return
             end
             hopLine = char(hopLine);
+%             disp(hopLine);
             
             trials = regexp(hopLine, '[0-9]*(?= ms)', 'match');
+%             disp(trials);
             trials_num = str2double(trials);
+%             disp(trials_num);
             avg = mean(trials_num);
             
+            %disp(avg);
             ips = regexp(hopLine, '(?:[0-9]{1,3}\.){3}[0-9]{1,3}', 'match');
             ip = char(ips(1));
+            %disp(ip);
+            %disp(length(ip));
             
             names = regexp(hopLine, '[a-zA-Z0-9\.-]*\.[a-z]{3}', 'match');
             names(length(names)+1) = {''};
@@ -120,9 +135,10 @@ classdef packetPlotter
             % input: trace data as 1D array of hop classes
             % output:   0 if worked
             %           1 if not worked
+%             disp('got to trace_graph');
             webmap;
+%             disp('ran trace_graph');
             counter = 1;
-            max_latency = 0;
             for i = 1:length(trace_array)
                 if ~isempty(trace_array(i).location_ip)
                     if counter>1
@@ -132,17 +148,13 @@ classdef packetPlotter
                         t2 = strsplit(trace_array(i).location_ip, '.');
                         t2 = t2(1);
                         t2 = t2{1,:};
-                        
+                        %disp(t1);
                         geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
                         geo_time(counter) = trace_array(i).avg_latency;
-                        if trace_array(i).avg_latency > max_latency:
-                            max_latency = trace_array(i).avg_latency;
                         counter = counter + 1;
                     else
                         geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
                         geo_time(counter) = trace_array(i).avg_latency;
-                        if trace_array(i).avg_latency > max_latency:
-                            max_latency = trace_array(i).avg_latency;
                         counter = counter + 1;
                     end
                 end
@@ -155,9 +167,9 @@ classdef packetPlotter
             hopToDisplay = 1;
             for i= 1:length(geo)-1
                 %getting info
-            	lat = str2double(geo(i).lat);
-            	lon = str2double(geo(i).long);
-            	des = '';
+                lat = str2double(geo(i).lat);
+                lon = str2double(geo(i).long);
+                des = '';
                 if ~isempty(geo(i).city)
                     des = [des '<b>City</b>: ' geo(i).city '<br>'];
                 end
