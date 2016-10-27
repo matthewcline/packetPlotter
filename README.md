@@ -7,7 +7,11 @@ Color scale:
 smaller latencies -----------------------------------------------------------------------------------> larger latencies
 ![Alt text](colormap.png?raw=true "colormap")
 
-Example: Path of a packet from Berkeley, CA, USA to Zanzibar University in Tanzania http://www.zanvarsity.ac.tz/
+Path of a packet from Berkeley, CA, USA to Zanzibar University in Tanzania http://www.zanvarsity.ac.tz/
 
 ![Alt text](Zanzibar.png?raw=true "Path of a packet from Berkeley, CA, USA to Tanzania http://www.zanvarsity.ac.tz/")
+
+Path of a packet from Berkeley, CA, USA to www.facebook.com that passes through Singapore and Ireland
+
+![Alt text](Hop.png?raw=true "Path of a packet from Berkeley, CA, USA to Tanzania http://www.zanvarsity.ac.tz/")
 
