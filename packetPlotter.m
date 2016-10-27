@@ -83,9 +83,10 @@ classdef packetPlotter
         function hop = make_hop_nix(charr)
             if regexp(charr, '* *')
                 hop = packetPlotter.createHop('', '', 0);
+                packet_loss = 1;
                 return
             end
-         
+            packet_loss = 0;
             names = regexp(charr, '[0-9a-z-\.]*\.([a-z]{3})', 'match');
             names(length(names)+1)={''};
             name = char(names(1));
@@ -102,32 +103,26 @@ classdef packetPlotter
         end
         
         function hopObj = make_hop_pc(hopLine)
-%             disp(hopLine);
             if regexp(char(hopLine), '\*[ ]*\*[ ]*\*')
                 hopObj = packetPlotter.createHop('', '', 0);
+                packet_loss = 1;
                 return
+            else
+                packet_loss = 0;
             end
             hopLine = char(hopLine);
-%             disp(hopLine);
             
             trials = regexp(hopLine, '[0-9]*(?= ms)', 'match');
-%             disp(trials);
             trials_num = str2double(trials);
-%             disp(trials_num);
             avg = mean(trials_num);
-            
-            %disp(avg);
+
             ips = regexp(hopLine, '(?:[0-9]{1,3}\.){3}[0-9]{1,3}', 'match');
             ip = char(ips(1));
-            %disp(ip);
-            %disp(length(ip));
             
             names = regexp(hopLine, '[a-zA-Z0-9\.-]*\.[a-z]{3}', 'match');
             names(length(names)+1) = {''};
-            %disp(names(1));
             name = char(names(1));
-            %disp(length(name));
-            hopObj = packetPlotter.createHop(name, ip, avg);
+            hopObj = packetPlotter.createHop(name, ip, avg, packet_loss);
         end
         
         function hopObj = createHop(name, ip, avg_latency)
@@ -140,93 +135,93 @@ classdef packetPlotter
             % output:   0 if worked
             %           1 if not worked
             webmap;
-            counter = 1;
-            for i = 1:length(trace_array)
-                if ~isempty(trace_array(i).location_ip)
-                    if counter>1
-                        t1 = strsplit(trace_array(i-1).location_ip, '.');
-                        t1 = t1(1);
-                        t1 = t1{1,:};
-                        t2 = strsplit(trace_array(i).location_ip, '.');
-                        t2 = t2(1);
-                        t2 = t2{1,:};
-                        %disp(t1);
-                        geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
-                        geo_time(counter) = trace_array(i).avg_latency;
-                        counter = counter + 1;
-                    else
-                        geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
-                        geo_time(counter) = trace_array(i).avg_latency;
-                        counter = counter + 1;
-                    end
-                end
-            end
             
-            % done processing, drawing now
-            lastdrawn = [0.0 0.0];
-  
+            [geo, geo_time] = packetPlotter.get_geo_structs(trace_array);
             % find unique hops
             [geo, geo_time] = packetPlotter.find_unique_hops(geo, geo_time);
             
             [max_latency_index, max_latency] = packetPlotter.find_max_latency_link(geo_time);
             [min_latency_index, min_latency] = packetPlotter.find_min_latency_link(geo_time);
             
-            disp(max_latency_index)
-            disp(min_latency_index)
-            disp(geo_time)
+            % done processing, drawing now
             color_map = packetPlotter.calculate_color_map(max_latency, min_latency);
-
+            lastdrawn = [0.0 0.0];
             for i = 1:length(geo)
-                
                 lat = str2double(geo(i).lat);
                 lon = str2double(geo(i).long);
                 % get info to display in hop bubbles
                 des = '';
-                if ~isempty(geo(i).city)
-                    des = [des '<b>City</b>: ' geo(i).city '<br>'];
+                destination_location = '';
+                if ~isempty(geo(i).country)
+                    des = [des '<b>Country</b>: ' geo(i).country '<br>'];
+                    destination_location = geo(i).country;
                 end
                 if ~isempty(geo(i).region)
                     des = [des '<b>Region</b>: ' geo(i).region '<br>'];
+                    destination_location = [geo(i).region ', ' destination_location];
                 end
-                if ~isempty(geo(i).country)
-                    des = [des '<b>Country</b>: ' geo(i).country '<br>'];
+                if ~isempty(geo(i).city)
+                    des = [des '<b>City</b>: ' geo(i).city '<br>'];
+                    destination_location = [geo(i).city ', ' destination_location];
                 end
-                feat = sprintf('Hop %s', int2str(i));
+                
+                locations{i} = destination_location;
 
                 % draw marker
+                feat = sprintf('Hop %s', int2str(i));
                 wmmarker(lat, lon, 'Description', des, 'FeatureName', feat);
-                % line stuff
+                
+                % draw line
                 if lastdrawn==[0.0 0.0]
                     lastdrawn = [lat lon];
                 else
-                    if min_latency < 0
-                        min_latency = 0;
-                    end
-                    latency = packetPlotter.calculate_latency(geo_time, i);
-                    display_latency = num2str(latency);
-                    if latency < 0
-                        display_latency = '~0';
-                    end
-                    link_description = ['<b>Link latency</b>: ' display_latency ' ms' '<br>'];
-                    disp('latency')
-                    disp(latency)
-                    color_value = round((latency - min_latency) * 3); % handles the offset
-                    if color_value <= 0
-                        color_value = 1;
-                    end
-                    disp('color_value')
-                    disp(color_value)
-                    wmline([lat lastdrawn(1)], [lon lastdrawn(2)], 'Description', link_description, 'Color', color_map(color_value, :));
+                    packetPlotter.draw_line(min_latency, geo_time, locations, i, lat, lon, lastdrawn, color_map);
                 end
                 lastdrawn = [lat lon];
             end
             output = 0;
             disp('Done');
+            end
+        
+        
+        function draw_line(min_latency, geo_time, locations, i, lat, lon, lastdrawn, color_map)
+            if min_latency < 0
+                min_latency = 0;
+            end
+            latency = packetPlotter.calculate_latency(geo_time, i);
+            display_latency = num2str(latency);
+            if latency < 0
+                display_latency = '~0';
+            end
+            link_description = ['<b>Link latency</b>: ' display_latency ' ms' '<br>'];
+            path_description = [locations{i - 1} ' to ' locations{i} '<br>'];
+
+
+            color_value = packetPlotter.get_color_value(latency, min_latency);
+            % draw line
+            wmline([lat lastdrawn(1)], [lon lastdrawn(2)], 'Description', link_description, 'FeatureName', path_description, 'Color', color_map(color_value, :));
+        end
+        
+        function [geo, geo_time] = get_geo_structs(trace_array)
+            counter = 1;
+            for i = 1:length(trace_array)
+                if ~isempty(trace_array(i).location_ip)
+                    geo(counter) = packetPlotter.geo_struct(trace_array(i).location_ip, i);
+                    geo_time(counter) = trace_array(i).avg_latency;
+                    counter = counter + 1;
+                end
+            end
         end
         
         function latency = calculate_latency(geo_time, i)
-            disp(geo_time)
             latency = geo_time(i) - geo_time(i - 1);
+        end
+        
+        function color_value = get_color_value(latency, min_latency)
+            color_value = round((latency - min_latency) * 3); % handles the offset
+            if color_value <= 0
+                color_value = 1;
+            end
         end
         
         function color_map = calculate_color_map(max_latency, min_latency)
@@ -235,8 +230,6 @@ classdef packetPlotter
             end
             range = max_latency - min_latency;
             range = round(range * 3);
-            disp('range:')
-            disp(range)
             color_map = jet(range);
         end
         
