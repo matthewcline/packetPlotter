@@ -4,7 +4,7 @@ packetPlotter maps the path of a packet across an IP network in real-time.  It d
 
 Color scale:
 
-smaller latencies ---------------------------------------------------------------------------------------> larger latencies
+smaller latencies -------------------------------------------------------------------------------------> larger latencies
 ![Alt text](colormap.png?raw=true "colormap")
 
 Example: Path of a packet from Berkeley, CA, USA to Zanzibar University in Tanzania http://www.zanvarsity.ac.tz/
