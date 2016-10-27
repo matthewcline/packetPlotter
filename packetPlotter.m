@@ -135,11 +135,9 @@ classdef packetPlotter
             % output:   0 if worked
             %           1 if not worked
             webmap;
-            
             [geo, geo_time] = packetPlotter.get_geo_structs(trace_array);
             % find unique hops
             [geo, geo_time] = packetPlotter.find_unique_hops(geo, geo_time);
-            
             [max_latency_index, max_latency] = packetPlotter.find_max_latency_link(geo_time);
             [min_latency_index, min_latency] = packetPlotter.find_min_latency_link(geo_time);
             
@@ -150,21 +148,7 @@ classdef packetPlotter
                 lat = str2double(geo(i).lat);
                 lon = str2double(geo(i).long);
                 % get info to display in hop bubbles
-                des = '';
-                destination_location = '';
-                if ~isempty(geo(i).country)
-                    des = [des '<b>Country</b>: ' geo(i).country '<br>'];
-                    destination_location = geo(i).country;
-                end
-                if ~isempty(geo(i).region)
-                    des = [des '<b>Region</b>: ' geo(i).region '<br>'];
-                    destination_location = [geo(i).region ', ' destination_location];
-                end
-                if ~isempty(geo(i).city)
-                    des = [des '<b>City</b>: ' geo(i).city '<br>'];
-                    destination_location = [geo(i).city ', ' destination_location];
-                end
-                
+                [des, destination_location] = packetPlotter.get_location_details(geo(i));
                 locations{i} = destination_location;
 
                 % draw marker
@@ -181,8 +165,24 @@ classdef packetPlotter
             end
             output = 0;
             disp('Done');
-            end
+        end
         
+        function [des, destination_location] = get_location_details(hop)
+            des = '';
+            destination_location = '';
+            if ~isempty(hop.country)
+                des = [des '<b>Country</b>: ' hop.country '<br>'];
+                destination_location = hop.country;
+            end
+            if ~isempty(hop.region)
+                des = [des '<b>Region</b>: ' hop.region '<br>'];
+                destination_location = [hop.region ', ' destination_location];
+            end
+            if ~isempty(hop.city)
+                des = [des '<b>City</b>: ' hop.city '<br>'];
+                destination_location = [hop.city ', ' destination_location];
+            end
+        end
         
         function draw_line(min_latency, geo_time, locations, i, lat, lon, lastdrawn, color_map)
             if min_latency < 0
