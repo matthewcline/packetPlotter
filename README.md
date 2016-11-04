@@ -15,3 +15,5 @@ Path of a packet from Berkeley, CA, USA to www.facebook.com that passes through 
 
 ![Alt text](Hop.png?raw=true "Path of a packet from Berkeley, CA, USA to Tanzania http://www.zanvarsity.ac.tz/")
 
+Future work: run the routes a few times to make the routes stable and the estimated latencies more accurate
+
